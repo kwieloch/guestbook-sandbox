@@ -13,7 +13,7 @@
 (conman/bind-connection *db* "sql/queries.sql")
 
 
-(extend-protocol jdbc/IResultSetReadColumn
+#_(extend-protocol jdbc/IResultSetReadColumn
   java.sql.Timestamp
   (result-set-read-column [v _2 _3]
     (.toLocalDateTime v))
@@ -24,7 +24,7 @@
   (result-set-read-column [v _2 _3]
     (.toLocalTime v)))
 
-(extend-protocol jdbc/ISQLValue
+#_(extend-protocol jdbc/ISQLValue
   java.util.Date
   (sql-value [v]
     (java.sql.Timestamp. (.getTime v)))
@@ -40,4 +40,5 @@
   java.time.ZonedDateTime
   (sql-value [v]
     (jt/sql-timestamp v)))
+
 
