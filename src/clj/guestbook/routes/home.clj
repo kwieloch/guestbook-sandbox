@@ -1,9 +1,8 @@
 (ns guestbook.routes.home
   (:require [guestbook.layout :as layout]
             [guestbook.db.core :as db]
-            [compojure.core :refer [defroutes GET]]
-            [ring.util.http-response :as response]
-            [clojure.java.io :as io]))
+            [compojure.core :refer [defroutes GET POST]]
+            [ring.util.http-response :as response]))
 
 (defn home-page []
   (layout/render
@@ -13,7 +12,13 @@
 (defn about-page []
   (layout/render "about.html"))
 
+(defn save-message! [{:keys [params]}]
+  (db/save-message! (assoc params 
+                           :timestamp (java.util.Date.)))
+  (response/found "/"))
+
 (defroutes home-routes
   (GET "/" [] (home-page))
-  (GET "/about" [] (about-page)))
+  (GET "/about" [] (about-page))
+  (POST "/message" request (save-message! request)))
 
