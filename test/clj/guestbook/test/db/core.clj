@@ -18,7 +18,7 @@
 (deftest test-messages
   (jdbc/with-db-transaction [t-conn *db*]
     (jdbc/db-set-rollback-only! t-conn)
-    (let [timestamp (java.util.Date.)
+    (let [timestamp (java.time.LocalDateTime/now)
           message {:name "Bob"
                    :message "Hello World"
                    :timestamp timestamp}]
