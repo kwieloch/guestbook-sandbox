@@ -21,16 +21,21 @@
         {% csrf-field %}
         <p>
           Name:
-          <input class="form-control" type="text" name="name" value="" />
+          <input class="form-control" type="text" name="name" value="{{name}}" />
         </p>
+        {% if errors.name %}
+        <div class="alert alert-danger">{{ errors.name|join }}</div>
+        {% endif %}
         <p>
           Message:
-          <textarea class="form-control" rows="4" cols="50" name="message"></textarea>
+          <textarea class="form-control" rows="4" cols="50" name="message">{{message}}</textarea>
         </p>
+        {% if errors.message %}
+        <div class="alert alert-danger">{{ errors.message|join }}</div>
+        {% endif %}
         <input type="submit" class="btn btn-primary" value="comment" />
       </div>
     </form>
   </div>
 </div>
-
 {% endblock %}
