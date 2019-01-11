@@ -1,6 +1,12 @@
 (ns guestbook.core
   (:require [reagent.core :as reagent :refer [atom]]
-            [ajax.core :refer [GET]]))
+            [ajax.core :refer [GET POST]]))
+
+(defn send-message [fields]
+  (POST "/message"
+        {:params @fields
+         :handler #(.log js/console (str {:response %}))
+         :error-handler #(.error js/console (str {:error %}))}))
 
 (defn get-messages [messages]
   (GET "/messages"
@@ -30,7 +36,9 @@
                                                              :name :message
                                                              :value (:message @fields)
                                                              :on-change #(swap! fields assoc :message (-> % .-target .-value) )}]
-                     [:input.btn.btn-primary {:type :submit :value "Comment"}]]])))
+                     [:input.btn.btn-primary {:type :submit 
+                                              :value "Comment"
+                                              :on-click #(send-message fields)}]]])))
 
 
 (defn home []
