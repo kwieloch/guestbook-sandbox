@@ -6,4 +6,4 @@ VALUES (:name, :message, :timestamp)
 
 -- :name get-messages :? :*
 -- :doc selects all available messages
-SELECT * FROM guestbook
+SELECT * FROM guestbook WHERE timestamp is not null
