@@ -28,17 +28,20 @@
                                :timestamp (java.util.Date.)))
       (response/found "/"))))
 
-(defn home-page [{:keys [flash]}]
+(defn home-page []
   (layout/render
     "home.html"
-    (merge {:messages (db/get-messages)}
-           (select-keys flash [:name :message :errors]))))
+    {:messages (db/get-messages)}))
 
 (defn about-page []
   (layout/render "about.html"))
 
+(defn get-messages []
+  (response/ok (db/get-messages)))
+
 (defroutes home-routes
-  (GET "/" request (home-page request))
+  (GET "/" [] (home-page))
+  (GET "/messages" [] (get-messages))
   (POST "/message" request (save-message! request))  
   (GET "/about" [] (about-page)))
 
