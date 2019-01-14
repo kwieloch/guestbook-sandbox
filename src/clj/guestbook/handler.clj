@@ -2,6 +2,7 @@
   (:require [guestbook.middleware :as middleware]
             [guestbook.layout :refer [error-page]]
             [guestbook.routes.home :refer [home-routes]]
+            [guestbook.routes.websockets :refer [websocket-routes]]
             [compojure.core :refer [routes wrap-routes]]
             [ring.util.http-response :as response]
             [compojure.route :as route]
@@ -19,6 +20,7 @@
       (-> #'home-routes
           (wrap-routes middleware/wrap-csrf)
           (wrap-routes middleware/wrap-formats))
+      #'websocket-routes
       (route/not-found
         (:body
           (error-page {:status 404

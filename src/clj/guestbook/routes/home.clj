@@ -19,19 +19,9 @@
 (defn validate-message [params]
   (first (st/validate params message-schema)))
 
-(defn save-message [{:keys [params]}]
-  (if-let [errors (validate-message params)]
-    (-> (response/bad-request {:errors errors}))
-    (try
-      (db/save-message! (assoc params :timestamp (java.util.Date.)))
-      (response/ok {:status :ok})
-      (catch Exception e
-        (response/internal-server-error {:errors {:server-error ["Failed to save message!"]}})))))
-
 (defn home-page []
   (layout/render
-    "home.html"
-    {:messages (db/get-messages)}))
+    "home.html"))
 
 (defn about-page []
   (layout/render "about.html"))
@@ -42,6 +32,5 @@
 (defroutes home-routes
   (GET "/" [] (home-page))
   (GET "/messages" [] (get-messages))
-  (POST "/message" request (save-message request))  
   (GET "/about" [] (about-page)))
 
