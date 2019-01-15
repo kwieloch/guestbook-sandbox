@@ -4,21 +4,23 @@
             [immutant.web.async :as async]
             [cognitect.transit :as transit]
             [guestbook.routes.home :as bl]
-            [guestbook.db.core :as db]))
+            [guestbook.db.core :as db]
+            [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.immutant :refer (get-sch-adapter)]))
 
-(defonce channels (atom #{}))
+(let [{:keys [ch-recv
+              send-fn 
+              connected-uids
+              ajax-post-fn 
+              ajax-get-or-ws-handshake-fn]}
+      (sente/make-channel-socket! (get-sch-adapter) {})]
 
-(defn connect! [channel]
-  (log/info "Channel open")
-  (swap! channels conj channel))
-
-(defn disconnect! [channel {:keys [code reason]}]
-  (log/info "Channel close, code:  " code "reason:" reason)
-  (swap! channels #(remove #{channel} %)))
-
-(defn notify-clients! [msg]
-  (doseq [channel @channels]
-    (async/send! channel msg)))
+  (def ring-ajax-post                ajax-post-fn)
+  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
+  (def ch-chsk                       ch-recv) ; ChannelSocket's receive channel
+  (def chsk-send!                    send-fn) ; ChannelSocket's send API fn
+  (def connected-uids                connected-uids) ; Watchable, read-only atom
+  )
 
 (defn save-message [msg]
   (if-let [errors (bl/validate-message msg)]
@@ -27,35 +29,25 @@
       (db/save-message! msg-ts)
       msg-ts)))
 
-(defn encode-transit [message]
-  (let [out    (java.io.ByteArrayOutputStream. 4096)
-        writer (transit/writer out :json)]
-    (transit/write writer message)
-    (.toString out)))
+(defn handle-message [{:keys [id client-id ?data]}]
+  (when (= id :guestbook/add-message)
+    (let [result (save-message ?data)]
+      (if (:errors result)
+        (chsk-send! client-id [:guestbook/error result])
+        (doseq [uid (:any @connected-uids)]
+          (log/debug result)
+          (chsk-send!! uid result))))))
 
-(defn decode-transit [message]
-  (let [in (java.io.ByteArrayInputStream. (.getBytes message))
-        reader (transit/reader in :json)]
-    (transit/read reader)))
+(defn stop-router [stop-fn]
+  (when stop-fn (stop-fn)))
 
-(defn handle-message [channel msg]
-  (let [result (save-message (decode-transit msg))]
-    (println result)
-    (if (:errors result)
-      (async/send! channel (encode-transit result))
-      #_(notify-clients! (encode-transit result))
-      (doseq [c @channels]
-        (log/debug result)
-        (async/send! c (encode-transit result))))))
+(defn start-router []
+  (sente/start-chsk-router! ch-chsk handle-message))
 
-(def websocket-callbacks
-  "WebSocket callback functions"
-  {:on-open connect!
-   :on-close disconnect!
-   :on-message handle-message})
-
-(defn ws-handler [request]
-  (async/as-channel request websocket-callbacks))
+(defstate router
+  :start start-router
+  :stop stop-router router)
 
 (defroutes websocket-routes
-  (GET "/ws" request (ws-handler request)))
+  (GET "/ws" request (ring-ajax-get-or-ws-handshake request))
+  (POST "/ws" request (ring-ajax-post req)))
