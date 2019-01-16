@@ -43,7 +43,7 @@
 
                  [:input.btn.btn-primary {:type :submit 
                                           :value "Comment"
-                                          :on-click #(ws/send-message! [:guestbook/add-message @fields] 8000)}]]])
+                                          :on-click #(ws/chsk-send! [:guestbook/add-message @fields] 8000)}]]])
 
 (defn response-handler [messages fields errors]
   (fn [{[_ msg] :?data}]
@@ -58,7 +58,7 @@
   (let [messages (reagent/atom nil)
         fields (reagent/atom nil)
         errors (reagent/atom nil)]
-    (ws/start-router! (response-handler messages fields errors))
+    (ws/start-router (response-handler messages fields errors))
     (get-messages messages)
     (fn []
       [:div

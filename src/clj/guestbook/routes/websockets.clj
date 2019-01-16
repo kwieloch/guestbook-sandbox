@@ -1,5 +1,5 @@
 (ns guestbook.routes.websockets
-  (:require [compojure.core :refer [GET defroutes wrap-routes]]
+  (:require [compojure.core :refer [GET POST defroutes wrap-routes]]
             [clojure.tools.logging :as log]
             [immutant.web.async :as async]
             [cognitect.transit :as transit]
@@ -18,9 +18,9 @@
 
   (def ring-ajax-post                ajax-post-fn)
   (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
-  (def ch-chsk                       ch-recv) ; ChannelSocket's receive channel
-  (def chsk-send!                    send-fn) ; ChannelSocket's send API fn
-  (def connected-uids                connected-uids) ; Watchable, read-only atom
+  (def ch-chsk                       ch-recv)
+  (def chsk-send!                    send-fn)
+  (def connected-uids                connected-uids)
   )
 
 (defn save-message [msg]
@@ -37,7 +37,7 @@
         (chsk-send! client-id [:guestbook/error result])
         (doseq [uid (:any @connected-uids)]
           (log/debug result)
-          (chsk-send! uid result))))))
+          (chsk-send! uid [:guestbook/add-message result]))))))
 
 (defn stop-router [stop-fn]
   (when stop-fn (stop-fn)))
@@ -47,8 +47,8 @@
 
 (defstate router
   :start start-router
-  :stop stop-router router)
+  :stop (stop-router router))
 
 (defroutes websocket-routes
   (GET "/ws" request (ring-ajax-get-or-ws-handshake request))
-  (POST "/ws" request (ring-ajax-post req)))
+  (POST "/ws" request (ring-ajax-post request)))

@@ -20,7 +20,8 @@
       (-> #'home-routes
           (wrap-routes middleware/wrap-csrf)
           (wrap-routes middleware/wrap-formats))
-      #'websocket-routes
+      (->  #'websocket-routes
+           (wrap-routes middleware/wrap-csrf))
       (route/not-found
         (:body
           (error-page {:status 404
