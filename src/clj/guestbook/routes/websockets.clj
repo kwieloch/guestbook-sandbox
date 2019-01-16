@@ -6,6 +6,7 @@
             [guestbook.routes.home :as bl]
             [guestbook.db.core :as db]
             [taoensso.sente :as sente]
+            [mount.core :refer [defstate]]
             [taoensso.sente.server-adapters.immutant :refer (get-sch-adapter)]))
 
 (let [{:keys [ch-recv
@@ -36,7 +37,7 @@
         (chsk-send! client-id [:guestbook/error result])
         (doseq [uid (:any @connected-uids)]
           (log/debug result)
-          (chsk-send!! uid result))))))
+          (chsk-send! uid result))))))
 
 (defn stop-router [stop-fn]
   (when stop-fn (stop-fn)))
