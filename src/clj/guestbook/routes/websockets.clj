@@ -46,7 +46,7 @@
   (sente/start-chsk-router! ch-chsk handle-message))
 
 (defstate router
-  :start start-router
+  :start (start-router)
   :stop (stop-router router))
 
 (defroutes websocket-routes

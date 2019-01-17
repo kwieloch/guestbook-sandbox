@@ -33,7 +33,7 @@
     (case (:id ev-msg)
       :chsk/handshake (handshake ev-msg)
       :chsk/state (state ev-msg)
-      :chck/recv (message ev-msg)
+      :chsk/recv (message ev-msg)
       (default-event-handler ev-msg))))
 
 (defn stop-router []
