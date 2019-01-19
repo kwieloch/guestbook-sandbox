@@ -8,6 +8,21 @@
        {:headers {"Accept" "application/transit+json"}
         :handler #(reset! messages (vec %))}))
 
+(defn feedback-handler [fields errors]
+  (fn [msg]
+    (.log js/console "Feedback: %s" msg)
+    (if-let [result-errors (:errors msg)]
+      (reset! errors result-errors)
+      (do
+        (reset! errors nil)
+        (reset! fields nil)))))
+
+(defn message-saved-handler [messages]
+  (fn [{[event-type msg] :?data}]
+    (.log js/console "Event: %s %s" event-type msg)
+    (when (= event-type :guestbook/message-added) 
+      (swap! messages conj msg))))
+
 (defn message-list [messages]
   [:ul.content
    (for [{:keys [name message timestamp]} @messages]
@@ -31,7 +46,7 @@
                  [:input.form-control {:type :text
                                        :name :name
                                        :value (:name @fields)
-                                       :on-change #(swap! fields assoc :name (-> % .-target .-value) )}]
+                                       :on-change #(swap! fields assoc :name (-> % .-target .-value))}]
                  [show-errors @errors :name]
                  
                  [:p "Message"]
@@ -43,22 +58,16 @@
 
                  [:input.btn.btn-primary {:type :submit 
                                           :value "Comment"
-                                          :on-click #(ws/chsk-send! [:guestbook/add-message @fields] 8000)}]]])
-
-(defn response-handler [messages fields errors]
-  (fn [{[_ msg] :?data}]
-    (if-let [result-errors (:errors msg)]
-      (reset! errors result-errors)
-      (do
-        (reset! errors nil)
-        (reset! fields nil)
-        (swap! messages conj msg)))))
+                                          :on-click #(ws/chsk-send! 
+                                                      [:guestbook/add-message @fields] 
+                                                      80
+                                                      (feedback-handler fields errors))}]]])
 
 (defn home []
   (let [messages (reagent/atom nil)
         fields (reagent/atom nil)
         errors (reagent/atom nil)]
-    (ws/start-router (response-handler messages fields errors))
+    (ws/start-router (message-saved-handler messages))
     (get-messages messages)
     (fn []
       [:div
