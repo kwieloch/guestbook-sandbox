@@ -3,15 +3,16 @@
             [ajax.core :refer [GET]]
             [guestbook.websocket :as ws]
             [taoensso.encore :as encore :refer-macros (have have?)]
-            [taoensso.timbre :as timbre :refer-macros (tracef debugf infof warnf errorf)]))
+            [taoensso.timbre :as timbre :refer-macros (tracef debugf infof warnf errorf)]
+            [taoensso.sente :as sente :refer (cb-success?)]))
 
 
-(def output-el (.getElementById js/document "output"))
 (defn ->output! [fmt & args]
-  (let [msg (apply encore/format fmt args)]
+  (let [output-el (.getElementById js/document "output")
+        msg (apply encore/format fmt args)]
     (timbre/debug msg)
-    (aset output-el "value" (str "• " (.-value output-el) "\n" msg))
-(aset output-el "scrollTop" (.-scrollHeight output-el))))
+    (aset output-el "value" (str " " (.-value output-el) "\n" msg))
+    (aset output-el "scrollTop" (.-scrollHeight output-el))))
 
 (defn get-messages [messages]
   (GET "/messages"
@@ -20,7 +21,7 @@
 
 (defn feedback-handler [fields errors]
   (fn [msg]
-    (.log js/console "Feedback: %s" msg)
+    (->output! "Feedback received: %s" msg)
     (if-let [result-errors (:errors msg)]
       (reset! errors result-errors)
       (do
@@ -36,7 +37,7 @@
 (defn message-list [messages]
   [:ul.content
    (for [{:keys [name message timestamp]} @messages]
-     ^{:key timestamp}
+     ^{:key (or timestamp (.getTime (js/Date.)))}
      [:li 
       (if timestamp [:time (.toLocaleString timestamp)] [:p "no time"])
       [:p message]
@@ -69,10 +70,11 @@
 
     [:input.btn.btn-primary {:type :submit 
                              :value "Comment"
-                             :on-click #(ws/chsk-send! 
-                                         [:guestbook/add-message @fields] 
-                                         80
-                                         (feedback-handler fields errors))}]]])
+                             :on-click (fn [ui-ev]
+                                         (->output! "Submit clicked!, %s" ui-ev)
+                                         (ws/chsk-send! [:guestbook/add-message @fields] 
+                                                        2000
+                                                        (feedback-handler fields errors)))}]]])
 
 (defn home []
   (let [messages (reagent/atom nil)
@@ -84,8 +86,8 @@
       [:div
        [:div.row
         [:div.span12 [message-list messages]]]
-       [:div.row [:div.span12 [message-form fields errors]]]
-       [:h1 "Hello World from Reagent"]])))
+       [:div.row
+        [:div.span12 [message-form fields errors]]]])))
 
 (reagent/render
  [home]

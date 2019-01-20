@@ -22,14 +22,14 @@
   (def chsk-state state)   ; Watchable, read-only atom
   )
 
-(defn handshake-handler [{:keys [?data]}]
+(defn handshake-handler [{:as ev-msg :keys [?data]}]
   (.log js/console "Connection established: " ?data))
 
-(defn state-handler [{:keys [?data]}]
+(defn state-handler [{:as ev-msg :keys [?data]}]
   (.log js/console (str "State changed: " ?data)))
 
-(defn default-event-handler [ev]
-  (.log js/console (str "Unhandled event: " (:event ev))))
+(defn default-event-handler [{:as ev-msg :keys [event]}]
+  (.log js/console (str "Unhandled event: " event)))
 
 (defn register-handlers [& [{:keys [message state handshake] :or {state state-handler handshake handshake-handler}}]]
   (fn [ev-msg]
