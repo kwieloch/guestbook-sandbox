@@ -1,7 +1,17 @@
 (ns guestbook.core
   (:require [reagent.core :as reagent :refer [atom]]
             [ajax.core :refer [GET]]
-            [guestbook.websocket :as ws]))
+            [guestbook.websocket :as ws]
+            [taoensso.encore :as encore :refer-macros (have have?)]
+            [taoensso.timbre :as timbre :refer-macros (tracef debugf infof warnf errorf)]))
+
+
+(def output-el (.getElementById js/document "output"))
+(defn ->output! [fmt & args]
+  (let [msg (apply encore/format fmt args)]
+    (timbre/debug msg)
+    (aset output-el "value" (str "• " (.-value output-el) "\n" msg))
+(aset output-el "scrollTop" (.-scrollHeight output-el))))
 
 (defn get-messages [messages]
   (GET "/messages"
