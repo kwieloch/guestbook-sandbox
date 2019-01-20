@@ -1,27 +1,11 @@
 (ns guestbook.routes.home
-  (:require [guestbook.layout :as layout]
+  (:require [compojure.core :refer [defroutes GET]]
             [guestbook.db.core :as db]
-            [compojure.core :refer [defroutes GET POST]]
-            [ring.util.http-response :as response]
-            [struct.core :as st]))
-
-(def message-schema
-  [[:name
-    st/required
-    st/string]
-
-   [:message
-    st/required
-    st/string
-    {:message "message must contain at least 10 characters"
-     :validate #(> (count %) 9)}]])
-
-(defn validate-message [params]
-  (first (st/validate params message-schema)))
+            [guestbook.layout :as layout]
+            [ring.util.http-response :as response]))
 
 (defn home-page []
-  (layout/render
-    "home.html"))
+  (layout/render "home.html"))
 
 (defn about-page []
   (layout/render "about.html"))

@@ -37,31 +37,32 @@
     [:div.alert.alert-danger description]))
 
 (defn message-form [fields errors]
-  [:div.content [:div.form-group
-                 [:p "name: " (:name @fields)]
-                 [:p "message: " (:message @fields)]
-                 [:p "errors: " @errors]
+  [:div.content 
+   [:div.form-group
+    [:p "name: " (:name @fields)]
+    [:p "message: " (:message @fields)]
+    [:p "errors: " @errors]
                  
-                 [:p "Name"] 
-                 [:input.form-control {:type :text
-                                       :name :name
-                                       :value (:name @fields)
-                                       :on-change #(swap! fields assoc :name (-> % .-target .-value))}]
-                 [show-errors @errors :name]
+    [:p "Name"] 
+    [:input.form-control {:type :text
+                          :name :name
+                          :value (:name @fields)
+                          :on-change #(swap! fields assoc :name (-> % .-target .-value))}]
+    [show-errors @errors :name]
                  
-                 [:p "Message"]
-                 [:textarea.form-control {:rows 4 :cols 50
-                                          :name :message
-                                          :value (:message @fields)
-                                          :on-change #(swap! fields assoc :message (-> % .-target .-value) )}]
-                 [show-errors @errors :message]
+    [:p "Message"]
+    [:textarea.form-control {:rows 4 :cols 50
+                             :name :message
+                             :value (:message @fields)
+                             :on-change #(swap! fields assoc :message (-> % .-target .-value) )}]
+    [show-errors @errors :message]
 
-                 [:input.btn.btn-primary {:type :submit 
-                                          :value "Comment"
-                                          :on-click #(ws/chsk-send! 
-                                                      [:guestbook/add-message @fields] 
-                                                      80
-                                                      (feedback-handler fields errors))}]]])
+    [:input.btn.btn-primary {:type :submit 
+                             :value "Comment"
+                             :on-click #(ws/chsk-send! 
+                                         [:guestbook/add-message @fields] 
+                                         80
+                                         (feedback-handler fields errors))}]]])
 
 (defn home []
   (let [messages (reagent/atom nil)

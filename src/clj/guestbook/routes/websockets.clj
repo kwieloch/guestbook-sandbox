@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [immutant.web.async :as async]
             [cognitect.transit :as transit]
-            [guestbook.routes.home :as bl]
+            [guestbook.comments :as comments]
             [guestbook.db.core :as db]
             [taoensso.sente :as sente]
             [mount.core :refer [defstate]]
@@ -24,11 +24,15 @@
   )
 
 (defn save-message [msg]
-  (if-let [errors (bl/validate-message msg)]
+  (if-let [errors (comments/validate-message msg)]
     {:errors errors}
     (let [msg-ts (assoc msg :timestamp (java.util.Date.))]
       (db/save-message! msg-ts)
       msg-ts)))
+
+(defn notify-clients [event-id msg]
+  (doseq [uid (:any @connected-uids)]
+    (chsk-send! uid [event-id msg])))
 
 (defn handle-message [{:keys [id client-id ?data ?reply-fn]}]
   (when (= id :guestbook/add-message)
@@ -36,9 +40,8 @@
       (if (:errors result)
         (?reply-fn result)
         (do
-          (?reply-fn {:guestbook/message-added result})
-          (doseq [uid (:any @connected-uids)]
-            (chsk-send! uid [:guestbook/message-added result])))))))
+          #_(?reply-fn {:guestbook/message-added result})
+          (notify-clients :guestbook/message-added result))))))
 
 (defn stop-router [stop-fn]
   (when stop-fn (stop-fn)))
