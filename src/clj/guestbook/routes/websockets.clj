@@ -40,7 +40,7 @@
       (if (:errors result)
         (?reply-fn result)
         (do
-          #_(?reply-fn {:guestbook/message-added result})
+          (?reply-fn {:guestbook/message-added result})
           (notify-clients :guestbook/message-added result))))))
 
 (defn stop-router [stop-fn]
