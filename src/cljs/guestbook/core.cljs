@@ -3,16 +3,9 @@
             [ajax.core :refer [GET]]
             [guestbook.websocket :as ws]
             [taoensso.encore :as encore :refer-macros (have have?)]
-            [taoensso.timbre :as timbre :refer-macros (tracef debugf infof warnf errorf)]
-            [taoensso.sente :as sente :refer (cb-success?)]))
+            [taoensso.timbre :as log]
+            [taoensso.sente :as sente]))
 
-
-(defn ->output! [fmt & args]
-  (let [output-el (.getElementById js/document "output")
-        msg (apply encore/format fmt args)]
-    (timbre/debug msg)
-    (aset output-el "value" (str " " (.-value output-el) "\n" msg))
-    (aset output-el "scrollTop" (.-scrollHeight output-el))))
 
 (defn get-messages [messages]
   (GET "/messages"
@@ -21,7 +14,6 @@
 
 (defn feedback-handler [fields errors]
   (fn [msg]
-    (->output! "Feedback received: %s" msg)
     (if-let [result-errors (:errors msg)]
       (reset! errors result-errors)
       (do
