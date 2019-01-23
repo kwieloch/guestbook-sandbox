@@ -22,15 +22,19 @@
 
 (defn message-saved-handler [messages]
   (fn [{[event-type msg] :?data}]
-    (when (= event-type :guestbook/message-added) 
-      (swap! messages conj msg))))
+    (when (= event-type :guestbook/message-added)
+      (do
+        (swap! messages conj msg)
+        (log/debug "new message: " msg "ALL: " @messages)))))
 
 (defn message-list [messages]
   [:ul.content
    (for [{:keys [name message timestamp]} @messages]
      ^{:key (or timestamp (.getTime (js/Date.)))}
      [:li 
-      (if timestamp [:time (.toLocaleString timestamp)] [:p "no time"])
+      (if timestamp 
+        [:time (.toLocaleString timestamp)]
+        [:p "no time"])
       [:p message]
       [:p "--- " name]])])
 
