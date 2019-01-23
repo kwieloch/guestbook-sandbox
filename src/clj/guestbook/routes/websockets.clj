@@ -35,7 +35,8 @@
     (chsk-send! uid [event-id msg])))
 
 (defn handle-message [{:keys [id ?data ?reply-fn]}]
-  (when (= id :guestbook/add-message)
+  (condp = id
+    :guestbook/add-message
     (let [result (save-message ?data)]
       (if (:errors result)
         (?reply-fn [:guestboook/message-invalid result])
