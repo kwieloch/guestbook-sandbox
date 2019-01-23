@@ -8,6 +8,7 @@
 
 
 (defn get-messages [messages]
+  (log/debug "Reset messages")
   (GET "/messages"
        {:headers {"Accept" "application/transit+json"}
         :handler #(reset! messages (->> (vec %) (sort-by :timestamp) (reverse)))}))
@@ -25,7 +26,7 @@
     (when (= event-type :guestbook/message-added)
       (do
         (swap! messages conj msg)
-        (log/debug "new message: " msg "ALL: " @messages)))))
+        (log/debug "new message: " msg)))))
 
 (defn message-list [messages]
   [:ul.content
