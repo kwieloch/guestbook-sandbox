@@ -42,7 +42,10 @@
         (?reply-fn [:guestboook/message-invalid result])
         (do
           (?reply-fn [:guestbook/message-added result])
-          (notify-clients [:guestbook/message-added result]))))))
+          (notify-clients [:guestbook/message-added result]))))
+    :guestbook/reload-messages
+    (?reply-fn [:guestbook/messages-reloaded (db/get-messages)])
+    (log/debug "Unhandled client event: " id ?data)))
 
 (defn stop-router [stop-fn]
   (when stop-fn (stop-fn)))

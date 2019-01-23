@@ -6,12 +6,21 @@
             [taoensso.timbre :as log]
             [taoensso.sente :as sente]))
 
+(defn newest-first [msgs]
+  (->> msgs (sort-by :timestamp) (reverse)))
 
 (defn get-messages [messages]
   (log/debug "Reset messages")
   (GET "/messages"
        {:headers {"Accept" "application/transit+json"}
-        :handler #(reset! messages (->> (vec %) (sort-by :timestamp) (reverse)))}))
+        :handler #(reset! messages (newest-first %))}))
+
+(defn reload-messages [messages]
+  (fn []
+    (ws/chsk-send! [:guestbook/reload-messages "Could you please?"] 
+                   8000
+                   (fn [[event-type msgs]]
+                     (reset! messages (newest-first msgs))))))
 
 (defn feedback-handler [fields errors]
   (fn [[event-id msg]]
@@ -75,9 +84,10 @@
   (let [messages (reagent/atom nil)
         fields   (reagent/atom nil)
         errors   (reagent/atom nil)]
-    (ws/start-router (message-saved-handler messages))
-    (get-messages messages)
+    (ws/start-router (message-saved-handler messages) 
+                     [(reload-messages messages)])
     (fn []
+      (reload-messages messages)
       [:div
        [:div.row
         [:div.span12 [message-form fields errors]]]

@@ -10,7 +10,6 @@
   (log/info "CSRF token detected in HTML, great!")
   (log/info "CSRF token NOT detected in HTML, default Sente config will reject requests"))
 
-
 (let [
       {:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! 
@@ -30,7 +29,7 @@
   (log/info (str "State changed: " ?data)))
 
 (defn default-event-handler [{:as ev-msg :keys [event]}]
-  (log/info (str "Unhandled event: " event)))
+  (log/info (str "Unhandled server event: " event)))
 
 (defn register-handlers [& [{:keys [message state handshake] 
                              :or {state state-handler handshake handshake-handler}}]]
@@ -43,12 +42,13 @@
 
 (defonce router (atom nil))
 (defn stop-router [] (when-let [stop-fn @router] (stop-fn)))
-(defn start-router [message-handler]
+(defn start-router [message-handler after-start]
   (stop-router)
   (reset! router 
           (sente/start-chsk-router! 
            ch-chsk 
            (register-handlers {:message message-handler
                                :state state-handler
-                               :handshake handshake-handler}))))
+                               :handshake #(do (handshake-handler %)
+                                               (doseq [action after-start] (action)))}))))
 
