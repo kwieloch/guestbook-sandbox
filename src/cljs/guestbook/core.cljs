@@ -10,10 +10,10 @@
 (defn get-messages [messages]
   (GET "/messages"
        {:headers {"Accept" "application/transit+json"}
-        :handler #(reset! messages (vec %))}))
+        :handler #(reset! messages (->> (vec %) (sort-by :timestamp) (reverse)))}))
 
 (defn feedback-handler [fields errors]
-  (fn [msg]
+  (fn [[event-id msg]]
     (if-let [result-errors (:errors msg)]
       (reset! errors result-errors)
       (do
@@ -22,7 +22,6 @@
 
 (defn message-saved-handler [messages]
   (fn [{[event-type msg] :?data}]
-    (.log js/console "Event: %s %s" event-type msg)
     (when (= event-type :guestbook/message-added) 
       (swap! messages conj msg))))
 
@@ -63,23 +62,22 @@
     [:input.btn.btn-primary {:type :submit 
                              :value "Comment"
                              :on-click (fn [ui-ev]
-                                         (->output! "Submit clicked!, %s" ui-ev)
                                          (ws/chsk-send! [:guestbook/add-message @fields] 
-                                                        2000
+                                                        6000
                                                         (feedback-handler fields errors)))}]]])
 
 (defn home []
   (let [messages (reagent/atom nil)
-        fields (reagent/atom nil)
-        errors (reagent/atom nil)]
+        fields   (reagent/atom nil)
+        errors   (reagent/atom nil)]
     (ws/start-router (message-saved-handler messages))
     (get-messages messages)
     (fn []
       [:div
        [:div.row
-        [:div.span12 [message-list messages]]]
+        [:div.span12 [message-form fields errors]]]
        [:div.row
-        [:div.span12 [message-form fields errors]]]])))
+        [:div.span12 [message-list messages]]]])))
 
 (reagent/render
  [home]

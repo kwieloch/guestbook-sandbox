@@ -30,18 +30,18 @@
       (db/save-message! msg-ts)
       msg-ts)))
 
-(defn notify-clients [event-id msg]
+(defn notify-clients [[event-id msg]]
   (doseq [uid (:any @connected-uids)]
     (chsk-send! uid [event-id msg])))
 
-(defn handle-message [{:keys [id client-id ?data ?reply-fn]}]
+(defn handle-message [{:keys [id ?data ?reply-fn]}]
   (when (= id :guestbook/add-message)
     (let [result (save-message ?data)]
       (if (:errors result)
-        (?reply-fn result)
+        (?reply-fn [:guestboook/message-invalid result])
         (do
-          (?reply-fn {:guestbook/message-added result})
-          (notify-clients :guestbook/message-added result))))))
+          (?reply-fn [:guestbook/message-added result])
+          (notify-clients [:guestbook/message-added result]))))))
 
 (defn stop-router [stop-fn]
   (when stop-fn (stop-fn)))
