@@ -1,6 +1,5 @@
 (ns guestbook.core
   (:require [reagent.core :as reagent :refer [atom]]
-            [ajax.core :refer [GET]]
             [guestbook.websocket :as ws]
             [taoensso.encore :as encore :refer-macros (have have?)]
             [taoensso.timbre :as log]
@@ -8,12 +7,6 @@
 
 (defn newest-first [msgs]
   (->> msgs (sort-by :timestamp) (reverse)))
-
-(defn get-messages [messages]
-  (log/debug "Reset messages")
-  (GET "/messages"
-       {:headers {"Accept" "application/transit+json"}
-        :handler #(reset! messages (newest-first %))}))
 
 (defn reload-messages [messages]
   (fn []
