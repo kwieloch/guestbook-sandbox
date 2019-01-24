@@ -1,21 +1,5 @@
-# guestbook
+# Sandbox 
 
-generated using Luminus version "3.10.29"
+This is a project that originated from Luminus guestbook example. It is a playgroung for experminents with web apps in Clojure
+Currently it is a simple web page that shows some messages and let you add more of them. It is not intended for any particular use.
 
-FIXME
-
-## Prerequisites
-
-You will need [Leiningen][1] 2.0 or above installed.
-
-[1]: https://github.com/technomancy/leiningen
-
-## Running
-
-To start a web server for the application, run:
-
-    lein run 
-
-## License
-
-Copyright © 2019 FIXME
