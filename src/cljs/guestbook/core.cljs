@@ -41,7 +41,7 @@
       [:p message]
       [:p "--- " name]])])
 
-(defn show-errors [errors field-id]
+(defn validation-errors [errors field-id]
   (when-let [description (field-id errors)]
     [:div.alert.alert-danger description]))
 
@@ -57,14 +57,14 @@
                           :name :name
                           :value (:name @fields)
                           :on-change #(swap! fields assoc :name (-> % .-target .-value))}]
-    [show-errors @errors :name]
+    [validation-errors @errors :name]
                  
     [:p "Message"]
     [:textarea.form-control {:rows 4 :cols 50
                              :name :message
                              :value (:message @fields)
                              :on-change #(swap! fields assoc :message (-> % .-target .-value) )}]
-    [show-errors @errors :message]
+    [validation-errors @errors :message]
 
     [:input.btn.btn-primary {:type :submit 
                              :value "Comment"
