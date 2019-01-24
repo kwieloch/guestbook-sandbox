@@ -1,6 +1,5 @@
 (ns guestbook.db.core
   (:require
-    [clojure.java.jdbc :as jdbc]
     [conman.core :as conman]
     [mount.core :refer [defstate]]
     [guestbook.config :refer [env]]))

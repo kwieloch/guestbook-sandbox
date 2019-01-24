@@ -1,9 +1,9 @@
 (ns guestbook.core
   (:require [guestbook.handler :as handler]
             [guestbook.nrepl :as nrepl]
+            [guestbook.config :refer [env]]
             [luminus.http-server :as http]
             [luminus-migrations.core :as migrations]
-            [guestbook.config :refer [env]]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [mount.core :as mount])
