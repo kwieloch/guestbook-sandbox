@@ -30,6 +30,15 @@
       (db/save-message! msg-ts)
       msg-ts)))
 
+(defn handle-add-message [evt-id msg]
+  (let [result (save-message msg)]
+    (if (:errors result)
+      [:guestbook/message-invalid result]
+      [:guestbook/message-added result])))
+
+(defn handle-get-all-messages [evt-id msg]
+  [:guestbook/all-messages-retrived (db/get-messages)])
+
 (defn notify-clients [[event-id msg]]
   (doseq [uid (:any @connected-uids)]
     (chsk-send! uid [event-id msg])))
@@ -37,14 +46,15 @@
 (defn handle-message [{:keys [id ?data ?reply-fn]}]
   (condp = id
     :guestbook/add-message
-    (let [result (save-message ?data)]
-      (if (:errors result)
-        (?reply-fn [:guestboook/message-invalid result])
-        (do
-          (?reply-fn [:guestbook/message-added result])
-          (notify-clients [:guestbook/message-added result]))))
-    :guestbook/reload-messages
-    (?reply-fn [:guestbook/messages-reloaded (db/get-messages)])
+    (let [[res-evt-id result] (handle-add-message id ?data)]
+      (if (= res-evt-id :guestbook/message-added)
+        (do (?reply-fn [res-evt-id result])
+            (notify-clients [res-evt-id result]))
+        (?reply-fn [res-evt-id result])))
+
+    :guestbook/get-all-messages
+    (?reply-fn (handle-get-all-messages id ?data))
+
     (log/debug "Unhandled client event: " id ?data)))
 
 (defn stop-router [stop-fn]

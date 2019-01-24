@@ -16,7 +16,7 @@
 ;; Commands for the server and their callbacks
 
 (defn get-all-messages [messages]
-  (ws/chsk-send! [:guestbook/reload-messages "Could you please?"] 
+  (ws/chsk-send! [:guestbook/get-all-messages "Could you please?"] 
                  6000
                  (fn [[event-id msgs]]
                    (reset! messages (newest-first msgs)))))
