@@ -8,20 +8,30 @@
 (defn newest-first [msgs]
   (->> msgs (sort-by :timestamp) (reverse)))
 
-(defn reload-messages [messages]
-  (fn []
-    (ws/chsk-send! [:guestbook/reload-messages "Could you please?"] 
-                   8000
-                   (fn [[event-type msgs]]
-                     (reset! messages (newest-first msgs))))))
+;; Commands for the browser
 
-(defn feedback-handler [fields errors]
-  (fn [[event-id msg]]
-    (if-let [result-errors (:errors msg)]
-      (reset! errors result-errors)
-      (do
-        (reset! errors nil)
-        (reset! fields nil)))))
+(defn update-fields [fields fieldname value]
+  (swap! fields assoc fieldname value))
+
+;; Commands for the server and their callbacks
+
+(defn get-all-messages [messages]
+  (ws/chsk-send! [:guestbook/reload-messages "Could you please?"] 
+                 6000
+                 (fn [[event-id msgs]]
+                   (reset! messages (newest-first msgs)))))
+
+(defn add-message [fields errors]
+  (ws/chsk-send! [:guestbook/add-message @fields] 
+                 6000
+                 (fn [[event-id msg]]
+                   (if-let [result-errors (:errors msg)]
+                     (reset! errors result-errors)
+                     (do
+                       (reset! errors nil)
+                       (reset! fields nil))))))
+
+;; Handlers for server events
 
 (defn message-saved-handler [messages]
   (fn [{[event-type msg] :?data}]
@@ -29,6 +39,8 @@
       (do
         (swap! messages conj msg)
         (log/debug "new message: " msg)))))
+
+;; GUI components
 
 (defn message-list [messages]
   [:ul.content
@@ -56,31 +68,27 @@
     [:input.form-control {:type :text
                           :name :name
                           :value (:name @fields)
-                          :on-change #(swap! fields assoc :name (-> % .-target .-value))}]
+                          :on-change #(update-fields fields :name (-> % .-target .-value))}]
     [validation-errors @errors :name]
                  
     [:p "Message"]
     [:textarea.form-control {:rows 4 :cols 50
                              :name :message
                              :value (:message @fields)
-                             :on-change #(swap! fields assoc :message (-> % .-target .-value) )}]
+                             :on-change #(update-fields fields :message (-> % .-target .-value))}]
     [validation-errors @errors :message]
 
     [:input.btn.btn-primary {:type :submit 
                              :value "Comment"
-                             :on-click (fn [ui-ev]
-                                         (ws/chsk-send! [:guestbook/add-message @fields] 
-                                                        6000
-                                                        (feedback-handler fields errors)))}]]])
+                             :on-click #(add-message fields errors)}]]])
 
 (defn home []
   (let [messages (reagent/atom nil)
         fields   (reagent/atom nil)
         errors   (reagent/atom nil)]
     (ws/start-router (message-saved-handler messages) 
-                     [(reload-messages messages)])
+                     [#(get-all-messages messages)])
     (fn []
-      (reload-messages messages)
       [:div
        [:div.row
         [:div.span12 [message-form fields errors]]]
